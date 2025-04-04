@@ -210,16 +210,23 @@ AVLNode<Key,Value>* AVLTree<Key,Value>::removeHelper(AVLNode<Key,Value>* root, c
          } else {
               // Node with two children.
               AVLNode<Key,Value>* pred = static_cast<AVLNode<Key,Value>*>(BinarySearchTree<Key,Value>::predecessor(root));
+              bool isAdjacent = (root->getLeft() == pred);
               this->nodeSwap(root, pred);
-              // After swap, update the local pointer to the predecessor (which now occupies the removed node's position)
               root = pred;
-              root->setLeft(removeHelper(root->getLeft(), key, shorter, success));
+              // For adjacent case, the duplicate key is now in the right subtree.
+              if(isAdjacent)
+                  root->setRight(removeHelper(root->getRight(), key, shorter, success));
+              else
+                  root->setLeft(removeHelper(root->getLeft(), key, shorter, success));
               if(root->getLeft() != nullptr)
                   root->getLeft()->setParent(root);
-              if(shorter)
-                  root->updateBalance(-1);
+              if(root->getRight() != nullptr)
+                  root->getRight()->setParent(root);
          }
     }
+    // Recompute balance factor from scratch.
+    root->setBalance(calcHeight(static_cast<AVLNode<Key,Value>*>(root->getLeft())) -
+                     calcHeight(static_cast<AVLNode<Key,Value>*>(root->getRight())));
     int bal = root->getBalance();
     if(bal == 2) {
          root = balanceLeft(root);
@@ -322,12 +329,12 @@ void AVLTree<Key, Value>::nodeSwap(AVLNode<Key,Value>* n1, AVLNode<Key,Value>* n
 {
     // If n2 is the direct left child of n1.
     if(n1->getLeft() == n2) {
+       AVLNode<Key,Value>* P = static_cast<AVLNode<Key,Value>*>(n1->getParent());
        AVLNode<Key,Value>* temp = n2->getRight();
        n2->setRight(n1);
        n1->setParent(n2);
        n1->setLeft(temp);
        if(temp) temp->setParent(n1);
-       AVLNode<Key,Value>* P = static_cast<AVLNode<Key,Value>*>(n1->getParent());
        n2->setParent(P);
        if(P) {
            if(P->getLeft() == n1)
@@ -344,12 +351,12 @@ void AVLTree<Key, Value>::nodeSwap(AVLNode<Key,Value>* n1, AVLNode<Key,Value>* n
     }
     // Else if n2 is the direct right child of n1.
     else if(n1->getRight() == n2) {
+       AVLNode<Key,Value>* P = static_cast<AVLNode<Key,Value>*>(n1->getParent());
        AVLNode<Key,Value>* temp = n2->getLeft();
        n2->setLeft(n1);
        n1->setParent(n2);
        n1->setRight(temp);
        if(temp) temp->setParent(n1);
-       AVLNode<Key,Value>* P = static_cast<AVLNode<Key,Value>*>(n1->getParent());
        n2->setParent(P);
        if(P) {
            if(P->getLeft() == n1)

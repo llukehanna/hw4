@@ -10,12 +10,14 @@
 
 /**
  * A templated class for a Node in a search tree.
- * The getters for parent/left/right are virtual so that they can be
- * overridden for future kinds of search trees, such as Red Black trees,
- * Splay trees, and AVL trees.
+ * The getters for parent/left/right are virtual so
+ * that they can be overridden for future kinds of
+ * search trees, such as Red Black trees, Splay trees,
+ * and AVL trees.
  */
 template <typename Key, typename Value>
-class Node {
+class Node
+{
 public:
     Node(const Key& key, const Value& value, Node<Key, Value>* parent);
     virtual ~Node();
@@ -128,7 +130,8 @@ void Node<Key, Value>::setValue(const Value& value) {
  * A templated unbalanced binary search tree.
  */
 template <typename Key, typename Value>
-class BinarySearchTree {
+class BinarySearchTree
+{
 public:
     BinarySearchTree();                   // constructor
     virtual ~BinarySearchTree();          // destructor
@@ -146,7 +149,8 @@ public:
     /**
     * An internal iterator class for traversing the contents of the BST.
     */
-    class iterator {
+    class iterator
+    {
     public:
         iterator(Node<Key,Value>* ptr = nullptr);
         iterator();
@@ -195,6 +199,7 @@ protected:
 
     // Provided helper functions
     virtual void printRoot(Node<Key, Value>* r) const;
+    // UPDATED nodeSwap with adjacent-case handling.
     virtual void nodeSwap(Node<Key,Value>* n1, Node<Key,Value>* n2);
 
     // Helper for clear()
@@ -447,44 +452,101 @@ bool BinarySearchTree<Key, Value>::isBalanced() const {
     return isBalancedHelper(root_) != -1;
 }
 
-/*
------------------------------------------------------
-Provided Functions: printRoot and nodeSwap
------------------------------------------------------
-*/
+/**
+ * Provided print function.
+ */
 template<typename Key, class Value>
 void BinarySearchTree<Key, Value>::print() const {
     printRoot(root_);
     std::cout << "\n";
 }
 
+/**
+ * Provided helper for printing.
+ */
 template<typename Key, class Value>
 void BinarySearchTree<Key, Value>::printRoot(Node<Key, Value>* r) const {
     // Assuming print_bst.h provides this functionality.
 }
 
+/**
+ * UPDATED nodeSwap function.
+ * This implementation provides special handling for adjacent nodes.
+ */
 template<typename Key, class Value>
 void BinarySearchTree<Key, Value>::nodeSwap(Node<Key,Value>* n1, Node<Key,Value>* n2) {
-    if(n1 == n2 || n1 == nullptr || n2 == nullptr)
+    // Special case: if n2 is the direct left child of n1.
+    if(n1->getLeft() == n2) {
+        Node<Key, Value>* T2 = n2->getRight();  // n2's right subtree.
+        Node<Key, Value>* T1 = n1->getRight();    // n1's right subtree.
+        Node<Key, Value>* P = n1->getParent();     // n1's parent.
+
+        // Make n2 the new child of P.
+        n2->setParent(P);
+        if(P != nullptr) {
+            if(P->getLeft() == n1)
+                P->setLeft(n2);
+            else
+                P->setRight(n2);
+        }
+        // n2 becomes parent of n1.
+        n2->setRight(n1);
+        n1->setParent(n2);
+        // Set n1's left subtree to T2.
+        n1->setLeft(T2);
+        if(T2 != nullptr)
+            T2->setParent(n1);
+        // n1's right subtree remains T1.
+        if(T1 != nullptr)
+            T1->setParent(n1);
+
+        if(this->root_ == n1)
+            this->root_ = n2;
         return;
-    
+    }
+    // Special case: if n2 is the direct right child of n1.
+    else if(n1->getRight() == n2) {
+        Node<Key, Value>* T2 = n2->getLeft();   // n2's left subtree.
+        Node<Key, Value>* T1 = n1->getLeft();     // n1's left subtree.
+        Node<Key, Value>* P = n1->getParent();      // n1's parent.
+
+        n2->setParent(P);
+        if(P != nullptr) {
+            if(P->getLeft() == n1)
+                P->setLeft(n2);
+            else
+                P->setRight(n2);
+        }
+        n2->setLeft(n1);
+        n1->setParent(n2);
+        n1->setRight(T2);
+        if(T2 != nullptr)
+            T2->setParent(n1);
+        if(T1 != nullptr)
+            T1->setParent(n1);
+
+        if(this->root_ == n1)
+            this->root_ = n2;
+        return;
+    }
+    // Non-adjacent case: use generic swap.
     Node<Key, Value>* n1p = n1->getParent();
     bool n1isLeft = (n1p != nullptr && n1 == n1p->getLeft());
     Node<Key, Value>* n2p = n2->getParent();
     bool n2isLeft = (n2p != nullptr && n2 == n2p->getLeft());
-    
+
     Node<Key, Value>* temp = n1->getParent();
     n1->setParent(n2->getParent());
     n2->setParent(temp);
-    
+
     temp = n1->getLeft();
     n1->setLeft(n2->getLeft());
     n2->setLeft(temp);
-    
+
     temp = n1->getRight();
     n1->setRight(n2->getRight());
     n2->setRight(temp);
-    
+
     if(n1p != nullptr && n1p != n2) {
         if(n1isLeft)
             n1p->setLeft(n2);
@@ -497,7 +559,7 @@ void BinarySearchTree<Key, Value>::nodeSwap(Node<Key,Value>* n1, Node<Key,Value>
         else
             n2p->setRight(n1);
     }
-    
+
     if(n1->getLeft() != nullptr)
         n1->getLeft()->setParent(n1);
     if(n1->getRight() != nullptr)
@@ -506,7 +568,7 @@ void BinarySearchTree<Key, Value>::nodeSwap(Node<Key,Value>* n1, Node<Key,Value>
         n2->getLeft()->setParent(n2);
     if(n2->getRight() != nullptr)
         n2->getRight()->setParent(n2);
-    
+
     if(this->root_ == n1)
         this->root_ = n2;
     else if(this->root_ == n2)
