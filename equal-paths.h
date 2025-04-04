@@ -6,6 +6,7 @@
 
 #ifndef RECCHECK
 #include <cstdlib>
+#include <iostream>
 #endif
 
 struct Node {
