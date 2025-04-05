@@ -1,6 +1,5 @@
 // equal-paths.cpp
 #include "equal-paths.h"
-#include <iostream>
 
 // Helper function that returns the depth of leaves in the subtree if uniform,
 // or -1 if the depths differ.
